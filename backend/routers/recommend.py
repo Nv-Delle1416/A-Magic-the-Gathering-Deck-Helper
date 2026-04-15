@@ -10,13 +10,29 @@ router = APIRouter(prefix="/api", tags=["recommend"])
 @router.post("/recommend", response_model=RecommendResponse)
 async def recommend(req: RecommendRequest):
     color_filter = "".join(req.color_identity) if req.color_identity else ""
-    query = f"id<={color_filter}" if color_filter else "f:commander"
-    # Add a keyword from the concept to narrow Scryfall results
-    concept_keyword = req.concept.split()[0].lower() if req.concept else ""
-    if concept_keyword:
-        query += f" o:{concept_keyword}"
+    base_query = f"id<={color_filter}" if color_filter else "f:commander"
 
+    # Try to enrich the query with a concept keyword, but fall back to
+    # base query if the keyword yields no results (e.g. "Grixis" is not oracle text)
+    MTG_KEYWORDS = {
+        "flying", "trample", "lifelink", "deathtouch", "haste", "vigilance",
+        "first", "reach", "flash", "hexproof", "indestructible", "menace",
+        "sacrifice", "counter", "draw", "discard", "exile", "graveyard",
+        "token", "copy", "proliferate", "infect", "equip", "enchant",
+        "ramp", "bounce", "mill", "storm", "cascade", "flashback",
+        "morph", "cycling", "kicker", "convoke", "emerge", "delve",
+    }
+    concept_words = req.concept.lower().split() if req.concept else []
+    concept_keyword = next(
+        (w for w in concept_words if w in MTG_KEYWORDS), ""
+    )
+    query = f"{base_query} o:{concept_keyword}" if concept_keyword else base_query
     cards = await search_cards(query=query, limit=30)
+
+    # Fall back to base query without oracle filter if the enriched query returns nothing
+    if not cards and concept_keyword:
+        cards = await search_cards(query=base_query, limit=30)
+
     if not cards:
         raise HTTPException(status_code=502, detail="Could not retrieve card data from Scryfall")
 
