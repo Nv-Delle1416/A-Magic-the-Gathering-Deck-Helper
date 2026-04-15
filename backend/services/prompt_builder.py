@@ -41,7 +41,7 @@ def build_recommendation_prompt(
     existing_deck: list[dict] | None = None,
 ) -> str:
     card_block = "\n".join(
-        f"{i+1}. {c['name']} | {c.get('mana_cost','')} | {c.get('type_line','')}\n   {c.get('oracle_text','')}"
+        f"{i+1}. {c.get('name', 'Unknown')} | {c.get('mana_cost','')} | {c.get('type_line','')}\n   {c.get('oracle_text','').replace(chr(10), ' ')}"
         for i, c in enumerate(cards)
     ) or "No card context provided."
 

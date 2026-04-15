@@ -27,3 +27,18 @@ def test_chaos_injection_preference_in_prompt():
     prefs = JankPreferences(chaos_injection=True)
     prompt = build_recommendation_prompt(concept="Test", cards=[], preferences=prefs)
     assert "off-meta" in prompt.lower() or "jank" in prompt.lower()
+
+
+def test_existing_deck_included_in_prompt():
+    existing = [{"name": "Sol Ring", "quantity": 1}, {"name": "Command Tower", "quantity": 1}]
+    prefs = JankPreferences()
+    prompt = build_recommendation_prompt(concept="Test", cards=[], preferences=prefs, existing_deck=existing)
+    assert "Sol Ring" in prompt
+    assert "Command Tower" in prompt
+    assert "CURRENT DECK" in prompt
+
+
+def test_all_flags_false_uses_llm_choice_fallback():
+    prefs = JankPreferences()  # all False
+    prompt = build_recommendation_prompt(concept="Test", cards=[], preferences=prefs)
+    assert "judgment" in prompt.lower() or "blend" in prompt.lower()
