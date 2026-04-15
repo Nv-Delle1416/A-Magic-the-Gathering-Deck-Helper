@@ -10,7 +10,7 @@ router = APIRouter(prefix="/api", tags=["recommend"])
 @router.post("/recommend", response_model=RecommendResponse)
 async def recommend(req: RecommendRequest):
     color_filter = "".join(req.color_identity) if req.color_identity else ""
-    query = f"c:{color_filter}" if color_filter else "f:commander"
+    query = f"id<={color_filter}" if color_filter else "f:commander"
     # Add a keyword from the concept to narrow Scryfall results
     concept_keyword = req.concept.split()[0].lower() if req.concept else ""
     if concept_keyword:
@@ -32,7 +32,10 @@ async def recommend(req: RecommendRequest):
         preferences=prefs,
         existing_deck=[c.model_dump() for c in req.existing_deck] if req.existing_deck else None,
     )
-    result = await generate_recommendations(prompt=prompt, model=req.model)
+    try:
+        result = await generate_recommendations(prompt=prompt, model=req.model)
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     return RecommendResponse(
         recommendations_text=result,
         cards_used_as_context=[c["name"] for c in cards],

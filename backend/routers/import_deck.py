@@ -7,6 +7,6 @@ router = APIRouter(prefix="/api", tags=["import"])
 @router.post("/import/archidekt", response_model=DeckImportResponse)
 async def import_archidekt(req: DeckImportRequest):
     deck = await fetch_deck(req.archidekt_url)
-    if not deck:
+    if deck is None:
         raise HTTPException(status_code=404, detail="Deck not found or is private")
     return DeckImportResponse(**deck)
