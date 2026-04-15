@@ -6,6 +6,7 @@ async def test_search_cards_returns_list():
     results = await search_cards(query="o:flying c:W", limit=5)
     assert isinstance(results, list)
     assert len(results) <= 5
+    assert len(results) > 0
     assert "name" in results[0]
     assert "oracle_text" in results[0]
 
