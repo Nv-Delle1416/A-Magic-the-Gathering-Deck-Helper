@@ -37,16 +37,19 @@ async def fetch_deck(url_or_id: str) -> Optional[dict]:
             if resp.status_code != 200:
                 return None
             data = resp.json()
-            cards = [
-                {
-                    "name": card["card"]["oracleCard"]["name"],
-                    "quantity": card["quantity"],
+            cards = []
+            for card in data.get("cards", []):
+                try:
+                    name = card["card"]["oracleCard"]["name"]
+                except (KeyError, TypeError):
+                    continue  # skip malformed card entries
+                cards.append({
+                    "name": name,
+                    "quantity": card.get("quantity", 1),
                     "category": card.get("categories", ["Mainboard"])[0]
                     if card.get("categories")
                     else "Mainboard",
-                }
-                for card in data.get("cards", [])
-            ]
+                })
             raw_format = data.get("deckFormat", "Unknown")
             readable_format = FORMAT_MAP.get(raw_format, str(raw_format))
             return {
@@ -54,5 +57,5 @@ async def fetch_deck(url_or_id: str) -> Optional[dict]:
                 "format": readable_format,
                 "cards": cards,
             }
-    except httpx.HTTPError:
+    except (httpx.HTTPError, Exception):
         return None
