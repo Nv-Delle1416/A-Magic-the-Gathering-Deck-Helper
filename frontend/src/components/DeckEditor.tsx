@@ -55,8 +55,8 @@ export function DeckEditor({ cards, onCardsChange }: Props) {
 
       {cards.length > 0 && (
         <div className="max-h-64 overflow-y-auto border rounded p-2 space-y-1">
-          {cards.map((card, i) => (
-            <div key={i} className="flex justify-between text-sm">
+          {cards.map((card) => (
+            <div key={card.name} className="flex justify-between text-sm">
               <span>{card.name}</span>
               <span className="text-gray-400">x{card.quantity}</span>
             </div>

@@ -63,7 +63,17 @@ export async function getRecommendations(
   return res.json();
 }
 
-export async function lookupCard(name: string) {
+export interface CardDetail {
+  name: string;
+  mana_cost: string;
+  type_line: string;
+  oracle_text: string;
+  color_identity: string[];
+  edhrec_rank: number | null;
+  image_uri: string | null;
+}
+
+export async function lookupCard(name: string): Promise<CardDetail | null> {
   const res = await fetch(`${BASE}/card/${encodeURIComponent(name)}`);
   if (!res.ok) return null;
   return res.json();
