@@ -1,4 +1,9 @@
-import type { JankPreferences } from "../api/client";
+export interface JankPreferences {
+  synergy_first: boolean;
+  hidden_gems: boolean;
+  chaos_injection: boolean;
+  llm_choice: boolean;
+}
 
 interface Props {
   prefs: JankPreferences;
