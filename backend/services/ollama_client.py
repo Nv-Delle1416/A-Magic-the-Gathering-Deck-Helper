@@ -23,19 +23,29 @@ def extract_json_from_response(text: str) -> dict | None:
     """Extract and parse a JSON object from LLM output.
 
     Handles plain JSON, JSON wrapped in markdown code blocks,
-    and JSON embedded in surrounding prose.
+    and JSON embedded in surrounding prose. Uses bracket counting
+    to correctly handle nested objects.
     """
-    # Strip markdown code block if present
-    code_block = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL)
+    # Strip markdown code fence if present (```json ... ``` or ``` ... ```)
+    code_block = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", text)
     if code_block:
         text = code_block.group(1)
 
-    # Find the first {...} block in the text
-    json_match = re.search(r"\{.*\}", text, re.DOTALL)
-    if not json_match:
+    # Find the first '{' and extract the full balanced JSON object
+    start = text.find("{")
+    if start == -1:
         return None
 
-    try:
-        return json.loads(json_match.group(0))
-    except json.JSONDecodeError:
-        return None
+    depth = 0
+    for i, ch in enumerate(text[start:], start):
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                try:
+                    return json.loads(text[start : i + 1])
+                except json.JSONDecodeError:
+                    return None
+
+    return None

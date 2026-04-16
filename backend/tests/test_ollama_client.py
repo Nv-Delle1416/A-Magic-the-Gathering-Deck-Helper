@@ -23,3 +23,23 @@ def test_extract_json_with_surrounding_text():
 def test_extract_json_returns_none_on_failure():
     result = extract_json_from_response("This is not JSON at all.")
     assert result is None
+
+
+def test_extract_json_with_nested_objects():
+    text = '{"analysis": "Good.", "meta": {"colors": ["G", "W"]}}'
+    result = extract_json_from_response(text)
+    assert result is not None
+    assert result["meta"]["colors"] == ["G", "W"]
+
+
+def test_extract_json_from_unlabeled_code_block():
+    text = '```\n{"analysis": "No label.", "queries": []}\n```'
+    result = extract_json_from_response(text)
+    assert result is not None
+    assert result["analysis"] == "No label."
+
+
+def test_extract_json_with_multiple_objects_returns_first():
+    text = 'First: {"a": 1} and second: {"b": 2}'
+    result = extract_json_from_response(text)
+    assert result == {"a": 1}
