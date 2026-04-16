@@ -112,3 +112,29 @@ def test_selection_prompt_synergy_first_preference():
         candidates=[], preferences=prefs
     )
     assert "synergy" in prompt.lower()
+
+
+def test_selection_prompt_includes_existing_deck():
+    commander = {
+        "name": "Atraxa, Praetors' Voice",
+        "type_line": "Legendary Creature",
+        "oracle_text": "proliferate",
+        "color_identity": ["W", "U", "B", "G"],
+        "mana_cost": "{G}{W}{U}{B}",
+    }
+    existing = [
+        {"name": "Sol Ring", "quantity": 1},
+        {"name": "Doubling Season", "quantity": 1},
+    ]
+    prefs = JankPreferences()
+    prompt = build_selection_prompt(
+        concept="Proliferate counters",
+        commander=commander,
+        deck_analysis="Deck needs more proliferate enablers.",
+        candidates=[],
+        preferences=prefs,
+        existing_deck=existing,
+    )
+    assert "CURRENT DECK" in prompt
+    assert "Sol Ring" in prompt
+    assert "Doubling Season" in prompt

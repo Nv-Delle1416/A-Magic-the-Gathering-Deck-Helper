@@ -38,6 +38,7 @@ def build_query_generation_prompt(
     concept: str,
     commander: dict,
     existing_deck: list[dict] | None = None,
+    preferences: JankPreferences | None = None,
 ) -> str:
     """Pass 1 prompt: ask the LLM to analyze the deck and generate Scryfall queries."""
     deck_block = ""
@@ -46,13 +47,34 @@ def build_query_generation_prompt(
             f"- {c['quantity']}x {c['name']}" for c in existing_deck
         )
 
+    pref_block = ""
+    if preferences:
+        pref_instructions = []
+        if preferences.hidden_gems:
+            pref_instructions.append(
+                "- HIDDEN GEMS: Generate queries that target obscure or rarely-played cards. "
+                "Avoid common staples; surface cards most players overlook."
+            )
+        if preferences.chaos_injection:
+            pref_instructions.append(
+                "- CHAOS INJECTION: Include at least one query designed to find off-meta, "
+                "weird, or jank cards that could still advance the deck's theme."
+            )
+        if preferences.synergy_first:
+            pref_instructions.append(
+                "- SYNERGY-FIRST: Bias queries toward oracle text searches that capture "
+                "mechanical interactions and keyword synergies."
+            )
+        if pref_instructions:
+            pref_block = "\n\nQUERY STYLE PREFERENCES (follow strictly):\n" + "\n".join(pref_instructions)
+
     return f"""You are an expert Magic: The Gathering deck builder and Scryfall power user.
 
-COMMANDER: {commander['name']}
-Type: {commander['type_line']}
-Oracle Text: {commander['oracle_text']}
-Color Identity: {', '.join(commander['color_identity'])}
-{deck_block}
+COMMANDER: {commander.get('name', '')}
+Type: {commander.get('type_line', '')}
+Oracle Text: {commander.get('oracle_text', '')}
+Color Identity: {', '.join(commander.get('color_identity', []))}
+{deck_block}{pref_block}
 
 DECK CONCEPT: {concept}
 
@@ -72,8 +94,7 @@ Respond ONLY with a JSON object in this exact format (no markdown, no explanatio
   "analysis": "A short paragraph summarizing the deck themes and gaps identified.",
   "queries": [
     "query string 1",
-    "query string 2",
-    "..."
+    "query string 2"
   ]
 }}"""
 
@@ -103,7 +124,7 @@ def build_selection_prompt(
 
     return f"""You are an expert Magic: The Gathering deck builder who loves finding creative, unusual synergies.
 
-COMMANDER: {commander['name']} — {commander['oracle_text']}
+COMMANDER: {commander.get('name', '')} — {commander.get('oracle_text', '')}
 DECK CONCEPT: {concept}
 {deck_block}
 
