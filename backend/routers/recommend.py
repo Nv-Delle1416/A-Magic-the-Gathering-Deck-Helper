@@ -9,8 +9,9 @@ router = APIRouter(prefix="/api", tags=["recommend"])
 
 @router.post("/recommend", response_model=RecommendResponse)
 async def recommend(req: RecommendRequest):
-    color_filter = "".join(req.color_identity) if req.color_identity else ""
-    base_query = f"id<={color_filter}" if color_filter else "f:commander"
+    # color_identity removed from RecommendRequest; router will be rewritten in Task 5
+    color_filter = ""
+    base_query = "f:commander"
 
     # Try to enrich the query with a concept keyword, but fall back to
     # base query if the keyword yields no results (e.g. "Grixis" is not oracle text)
