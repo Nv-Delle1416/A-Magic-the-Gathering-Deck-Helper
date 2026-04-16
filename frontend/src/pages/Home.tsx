@@ -1,19 +1,15 @@
 import { useState } from "react";
 import { DeckEditor } from "../components/DeckEditor";
 import { JankPreferences } from "../components/JankPreferences";
+import type { JankPreferences as JankPrefs } from "../components/JankPreferences";
 import { RecommendationPanel } from "../components/RecommendationPanel";
 import { getRecommendations } from "../api/client";
-import type { DeckCard, JankPreferences as JankPrefs } from "../api/client";
-
-const MTG_COLORS = ["W", "U", "B", "R", "G"];
-const COLOR_LABELS: Record<string, string> = {
-  W: "White", U: "Blue", B: "Black", R: "Red", G: "Green",
-};
+import type { DeckCard } from "../api/client";
 
 export function Home() {
   const [cards, setCards] = useState<DeckCard[]>([]);
   const [concept, setConcept] = useState("");
-  const [colorIdentity, setColorIdentity] = useState<string[]>([]);
+  const [commanderName, setCommanderName] = useState("");
   const [prefs, setPrefs] = useState<JankPrefs>({
     synergy_first: false,
     hidden_gems: false,
@@ -25,22 +21,20 @@ export function Home() {
   const [result, setResult] = useState<{ text: string; context: string[] } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const toggleColor = (c: string) =>
-    setColorIdentity((prev) =>
-      prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]
-    );
-
   const handleRecommend = async () => {
-    if (!concept.trim()) return;
+    if (!concept.trim() || !commanderName.trim()) return;
     setLoading(true);
     setError(null);
     try {
       const res = await getRecommendations({
         concept,
-        color_identity: colorIdentity,
+        commander_name: commanderName,
         existing_deck: cards,
         model,
-        preferences: prefs,
+        synergy_first: prefs.synergy_first,
+        hidden_gems: prefs.hidden_gems,
+        chaos_injection: prefs.chaos_injection,
+        llm_choice: prefs.llm_choice,
       });
       setResult({ text: res.recommendations_text, context: res.cards_used_as_context });
     } catch (e: unknown) {
@@ -77,22 +71,14 @@ export function Home() {
             </div>
 
             <div>
-              <label className="block font-semibold text-sm mb-2">Color Identity</label>
-              <div className="flex gap-2">
-                {MTG_COLORS.map((c) => (
-                  <button
-                    key={c}
-                    onClick={() => toggleColor(c)}
-                    className={`px-3 py-1 rounded text-sm border ${
-                      colorIdentity.includes(c)
-                        ? "bg-indigo-600 text-white border-indigo-600"
-                        : "bg-white text-gray-700 border-gray-300"
-                    }`}
-                  >
-                    {COLOR_LABELS[c]}
-                  </button>
-                ))}
-              </div>
+              <label className="block font-semibold text-sm mb-1">Commander Name</label>
+              <input
+                type="text"
+                placeholder="e.g. Atraxa, Praetors' Voice"
+                value={commanderName}
+                onChange={(e) => setCommanderName(e.target.value)}
+                className="w-full border rounded px-3 py-2 text-sm"
+              />
             </div>
 
             <div>
@@ -109,7 +95,7 @@ export function Home() {
 
             <button
               onClick={handleRecommend}
-              disabled={loading || !concept.trim()}
+              disabled={loading || !concept.trim() || !commanderName.trim()}
               className="w-full bg-indigo-600 text-white py-2 rounded font-semibold disabled:opacity-50"
             >
               {loading ? "Thinking..." : "Get Recommendations"}
