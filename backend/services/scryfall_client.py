@@ -47,3 +47,27 @@ async def get_card_by_name(name: str) -> Optional[dict]:
             return _slim_card(resp.json())
     except httpx.HTTPError:
         return None
+
+
+async def get_commander(name: str) -> dict | None:
+    """Fuzzy-lookup a card by name and validate it is a legal Commander.
+
+    A card is a legal commander if:
+    - Its type line contains 'Legendary Creature', OR
+    - Its oracle text contains 'can be your commander'
+    Returns None if the card is not found or is not a legal commander.
+    """
+    card = await get_card_by_name(name)
+    if card is None:
+        return None
+
+    type_line = card.get("type_line", "")
+    oracle_text = card.get("oracle_text", "")
+
+    is_legendary_creature = "Legendary" in type_line and "Creature" in type_line
+    can_be_commander = "can be your commander" in oracle_text.lower()
+
+    if not (is_legendary_creature or can_be_commander):
+        return None
+
+    return card
