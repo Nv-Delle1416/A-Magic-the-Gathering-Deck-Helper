@@ -1,18 +1,14 @@
 const BASE = "http://localhost:8000/api";
 
-export interface JankPreferences {
+export interface RecommendRequest {
+  concept: string;
+  commander_name: string;
+  existing_deck: { name: string; quantity: number }[];
+  model: string;
   synergy_first: boolean;
   hidden_gems: boolean;
   chaos_injection: boolean;
   llm_choice: boolean;
-}
-
-export interface RecommendRequest {
-  concept: string;
-  color_identity: string[];
-  existing_deck: { name: string; quantity: number }[];
-  model: string;
-  preferences: JankPreferences;
 }
 
 export interface RecommendResponse {
@@ -48,16 +44,7 @@ export async function getRecommendations(
   const res = await fetch(`${BASE}/recommend`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      concept: req.concept,
-      color_identity: req.color_identity,
-      existing_deck: req.existing_deck,
-      model: req.model,
-      synergy_first: req.preferences.synergy_first,
-      hidden_gems: req.preferences.hidden_gems,
-      chaos_injection: req.preferences.chaos_injection,
-      llm_choice: req.preferences.llm_choice,
-    }),
+    body: JSON.stringify(req),
   });
   if (!res.ok) throw new Error(`Recommendation failed: ${res.statusText}`);
   return res.json();
