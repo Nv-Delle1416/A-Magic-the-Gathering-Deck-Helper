@@ -1,4 +1,4 @@
-const BASE = "http://localhost:8000/api";
+const BASE = "http://localhost:8001/api";
 
 export interface RecommendRequest {
   concept: string;
