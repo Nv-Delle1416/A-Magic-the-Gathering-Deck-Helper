@@ -1,5 +1,4 @@
 import httpx
-from typing import Optional
 
 SCRYFALL_BASE = "https://api.scryfall.com"
 
@@ -34,7 +33,7 @@ async def search_cards(query: str, limit: int = 20) -> list[dict]:
         return []
 
 
-async def get_card_by_name(name: str) -> Optional[dict]:
+async def get_card_by_name(name: str) -> dict | None:
     try:
         async with httpx.AsyncClient() as client:
             resp = await client.get(
